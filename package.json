@@ -23,7 +23,7 @@
     "pre",
     "dimerapp"
   ],
-  "author": "virk,dimerapp",
+  "author": "virk",
   "license": "MIT",
   "devDependencies": {
     "@adonisjs/mrm-preset": "^2.4.0",
