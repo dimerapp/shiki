@@ -84,6 +84,46 @@ test.group('ShikiRenderer', () => {
 		assert.equal(lang, 'text')
 		assert.isTrue(code.includes('<div class="line"'))
 	})
+
+	test('get total number of lines', async (assert) => {
+		const codeblock = [
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const { code, lang, linesLength } = shiki.render(codeblock, 'javascript', undefined, true)
+		assert.equal(lang, 'javascript')
+		assert.equal(linesLength, 7)
+		assert.isTrue(code.includes('<div class="line"'))
+	})
+
+	test('get total number of lines for plain text language', async (assert) => {
+		const codeblock = [
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const { code, lang, linesLength } = shiki.render(codeblock, 'text', undefined, true)
+		assert.equal(lang, 'text')
+		assert.equal(linesLength, 7)
+		assert.isTrue(code.includes('<div class="line"'))
+	})
 })
 
 test.group('Shiki transform', () => {
@@ -198,12 +238,12 @@ test.group('Shiki transform', () => {
 		const code = (file.ast!.children[2] as any).children[0].children[0].value
 		const lines = code.split('class="line')
 
-		assert.isTrue(lines[1].startsWith(' dim'))
-		assert.isTrue(lines[2].startsWith(' dim'))
-		assert.isTrue(lines[3].startsWith(' dim'))
-		assert.isTrue(lines[4].startsWith(' dim'))
-		assert.isTrue(lines[5].startsWith(' dim'))
-		assert.isTrue(lines[6].startsWith(' dim'))
+		assert.isTrue(lines[1].startsWith('"'))
+		assert.isTrue(lines[2].startsWith('"'))
+		assert.isTrue(lines[3].startsWith('"'))
+		assert.isTrue(lines[4].startsWith('"'))
+		assert.isTrue(lines[5].startsWith('"'))
+		assert.isTrue(lines[6].startsWith('"'))
 	})
 
 	test('allow defining the filename', async (assert) => {
@@ -228,7 +268,17 @@ test.group('Shiki transform', () => {
 		file.transform(shiki.transform)
 		await file.process()
 
-		const code = file.ast!.children[2] as any
-		assert.equal(code.properties.dataFile, 'foo.js')
+		const pre = file.ast!.children[2] as any
+		assert.equal(pre.properties.dataFile, 'foo.js')
+
+		const code = pre.children[0].children[0].value
+		const lines = code.split('class="line')
+
+		assert.isTrue(lines[1].startsWith('"'))
+		assert.isTrue(lines[2].startsWith('"'))
+		assert.isTrue(lines[3].startsWith('"'))
+		assert.isTrue(lines[4].startsWith('"'))
+		assert.isTrue(lines[5].startsWith('"'))
+		assert.isTrue(lines[6].startsWith('"'))
 	})
 })

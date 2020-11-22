@@ -25,12 +25,20 @@ const DEFAULT_NODE = {
 	lang: null,
 	lineHighlights: null,
 	fileName: null,
+	lineNumbers: false,
 }
 
 /**
  * Parse thematic block next to "```"
  */
-function parseThematicBlock(lang: string) {
+function parseThematicBlock(
+	lang: string
+): {
+	lang: null | string
+	lineHighlights: null | string
+	fileName: null | string
+	lineNumbers: boolean
+} {
 	/**
 	 * Language property on node is missing
 	 */
@@ -45,6 +53,7 @@ function parseThematicBlock(lang: string) {
 		lang: language ? language[0] : null,
 		lineHighlights: tokens[1] ? tokens[1].replace('}', '') : null,
 		fileName: tokens[2] ? tokens[2].replace('}', '') : null,
+		lineNumbers: tokens[3] ? tokens[3].replace('}', '') === 'lineNumbers' : false,
 	}
 }
 
@@ -93,11 +102,12 @@ export class ShikiRenderer {
 	/**
 	 * Wraps code inside pre tag
 	 */
-	private wrapToPre(code: string, lang: string) {
+	private wrapToPre(code: string, lang: string, linesLength: number | null) {
 		return {
 			code,
 			lang,
 			bgColor: this.themeToUse.bg,
+			linesLength,
 		}
 	}
 
@@ -177,7 +187,7 @@ export class ShikiRenderer {
 	/**
 	 * Render code string and get HTML back
 	 */
-	public render(code: string, language?: string, highlights?: number[]) {
+	public render(code: string, language?: string, highlights?: number[], countLines?: boolean) {
 		language = language || 'text'
 
 		/**
@@ -193,11 +203,13 @@ export class ShikiRenderer {
 		 * to render them as it is
 		 */
 		if (this.isPlaintext(language)) {
+			const linesLength = countLines ? code.split('\n').length : null
 			return this.wrapToPre(
 				`<div class="line"><span style="color: ${this.themeToUse.fg}">${this.escapeHtml(
 					code
 				)}</span></div>`,
-				'text'
+				'text',
+				linesLength
 			)
 		}
 
@@ -223,7 +235,7 @@ export class ShikiRenderer {
 			html += `</div>`
 		})
 
-		return this.wrapToPre(html, language)
+		return this.wrapToPre(html, language, countLines ? tokens.length : null)
 	}
 
 	/**
@@ -236,7 +248,9 @@ export class ShikiRenderer {
 				 * Parsing the content next to "```". Which is usually
 				 * "```{1-3}{filename}"
 				 */
-				const { lang, lineHighlights, fileName } = parseThematicBlock(node.lang as string)
+				const { lang, lineHighlights, fileName, lineNumbers } = parseThematicBlock(
+					node.lang as string
+				)
 
 				/**
 				 * Convert ranges "1-3,4-6" to an array of line numbers
@@ -246,7 +260,12 @@ export class ShikiRenderer {
 				/**
 				 * Render plain text to code
 				 */
-				const { code, lang: processedLang, bgColor } = this.render(node.value, lang, highlights)
+				const { code, lang: processedLang, bgColor, linesLength } = this.render(
+					node.value,
+					lang,
+					highlights && highlights.length ? highlights : undefined,
+					lineNumbers
+				)
 
 				/**
 				 * Mutate the node type to self handle the creation
@@ -264,6 +283,7 @@ export class ShikiRenderer {
 					className: ['dimer-highlight', `language-${processedLang}`],
 					style: `background-color: ${bgColor}`,
 					dataFile: fileName,
+					...(linesLength ? { lines: linesLength } : {}),
 				}
 
 				/**
