@@ -38,9 +38,9 @@ test.group('Shiki | grammar', () => {
 		assert.equal(pre.type, 'element')
 		assert.equal(pre.tagName, 'pre')
 		assert.deepEqual(pre.properties, {
-			className: ['language-js'],
+			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -73,9 +73,9 @@ test.group('Shiki | grammar', () => {
 		assert.equal(pre.type, 'element')
 		assert.equal(pre.tagName, 'pre')
 		assert.deepEqual(pre.properties, {
-			className: ['language-js'],
+			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -114,9 +114,9 @@ test.group('Shiki | grammar', () => {
 		assert.equal(pre.type, 'element')
 		assert.equal(pre.tagName, 'pre')
 		assert.deepEqual(pre.properties, {
-			className: ['language-js'],
+			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 			dateFileName: 'foo.js',
 		})
 
@@ -158,7 +158,7 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -197,9 +197,9 @@ test.group('Shiki | grammar', () => {
 		assert.equal(pre.type, 'element')
 		assert.equal(pre.tagName, 'pre')
 		assert.deepEqual(pre.properties, {
-			className: ['language-js'],
+			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -242,7 +242,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -277,7 +277,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -318,7 +318,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 			dateFileName: 'foo.js',
 		})
 
@@ -362,7 +362,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -397,7 +397,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
@@ -438,7 +438,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238; color: #EEFFFF;',
+			style: 'background-color: #263238;',
 			dateFileName: 'foo.js',
 		})
 
