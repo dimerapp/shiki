@@ -82,5 +82,16 @@
     "shiki-languages": "^0.2.7",
     "shiki-themes": "^0.2.7",
     "unist-util-map": "^2.0.1"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dimerapp/shiki.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dimerapp/shiki/issues"
+  },
+  "homepage": "https://github.com/dimerapp/shiki#readme"
 }
