@@ -11,122 +11,7 @@ import test from 'japa'
 import { MarkdownFile } from '@dimerapp/markdown'
 import { ShikiRenderer } from '../src/Renderer'
 
-test.group('ShikiRenderer', () => {
-	test('render codeblocks using shiki', async (assert) => {
-		const codeblock = [
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code, lang } = shiki.render(codeblock, 'javascript')
-		assert.equal(lang, 'javascript')
-		assert.isTrue(code.includes('<div class="line"'))
-	})
-
-	test('highlight mentioned line ranges', async (assert) => {
-		const codeblock = [
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code } = shiki.render(codeblock, 'javascript', [1, 2, 3, 5])
-
-		const lines = code.split('class="line')
-		assert.isTrue(lines[1].startsWith(' highlight'))
-		assert.isTrue(lines[2].startsWith(' highlight'))
-		assert.isTrue(lines[3].startsWith(' highlight'))
-		assert.isTrue(lines[4].startsWith(' dim'))
-		assert.isTrue(lines[5].startsWith(' highlight'))
-	})
-
-	test('ignore plain text codeblocks', async (assert) => {
-		const codeblock = [
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code, lang } = shiki.render(codeblock)
-		assert.equal(lang, 'text')
-		assert.isTrue(code.includes('<div class="line"'))
-	})
-
-	test('ignore codeblocks for un-registered languages', async (assert) => {
-		const codeblock = ['```edge', '{{ username }}', '```'].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code, lang } = shiki.render(codeblock, 'edge')
-		assert.equal(lang, 'text')
-		assert.isTrue(code.includes('<div class="line"'))
-	})
-
-	test('get total number of lines', async (assert) => {
-		const codeblock = [
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code, lang, linesLength } = shiki.render(codeblock, 'javascript', undefined, true)
-		assert.equal(lang, 'javascript')
-		assert.equal(linesLength, 7)
-		assert.isTrue(code.includes('<div class="line"'))
-	})
-
-	test('get total number of lines for plain text language', async (assert) => {
-		const codeblock = [
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const { code, lang, linesLength } = shiki.render(codeblock, 'text', undefined, true)
-		assert.equal(lang, 'text')
-		assert.equal(linesLength, 7)
-		assert.isTrue(code.includes('<div class="line"'))
-	})
-})
-
-test.group('Shiki transform', () => {
+test.group('Shiki | grammar', () => {
 	test('transform code blocks inside the pre tag', async (assert) => {
 		const markdown = [
 			`Pre sample`,
@@ -145,20 +30,28 @@ test.group('Shiki transform', () => {
 		const shiki = new ShikiRenderer(__dirname)
 		await shiki.boot()
 
-		const file = new MarkdownFile(markdown, {})
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
 		file.transform(shiki.transform)
 		await file.process()
 
-		assert.isTrue(
-			(file.ast!.children[2] as any).children[0].children[0].value.includes('<div class="line"')
-		)
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-js'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.equal(code.children.length, pre.properties.dataLinesCount)
 	})
 
-	test('allow line highlights as ranges', async (assert) => {
+	test('highlight lines using ranges', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```js{1-3,6}',
+			'```js{2-3,6}',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -172,81 +65,30 @@ test.group('Shiki transform', () => {
 		const shiki = new ShikiRenderer(__dirname)
 		await shiki.boot()
 
-		const file = new MarkdownFile(markdown, {})
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
 		file.transform(shiki.transform)
 		await file.process()
 
-		const code = (file.ast!.children[2] as any).children[0].children[0].value
-		const lines = code.split('class="line')
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-js'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
 
-		assert.isTrue(lines[1].startsWith(' highlight'))
-		assert.isTrue(lines[2].startsWith(' highlight'))
-		assert.isTrue(lines[3].startsWith(' highlight'))
-		assert.isTrue(lines[4].startsWith(' dim'))
-		assert.isTrue(lines[5].startsWith(' dim'))
-		assert.isTrue(lines[6].startsWith(' highlight'))
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
 	})
 
-	test('ignore when thematic block is invalid', async (assert) => {
-		const markdown = [
-			`Pre sample`,
-			'',
-			'```js[higlight="1,3"]',
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-			'```',
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const file = new MarkdownFile(markdown, {})
-		file.transform(shiki.transform)
-		await file.process()
-
-		const code = file.ast!.children[2]
-		assert.deepEqual((code.properties as any).className, ['dimer-highlight', 'language-text'])
-	})
-
-	test('ignore when ranges are not defined properly', async (assert) => {
-		const markdown = [
-			`Pre sample`,
-			'',
-			'```js{foo-bar}',
-			`const Markdown = require('@dimerapp/markdown')`,
-			`const markdown = new Markdown(contents)`,
-			`const tokens = await markdown.toJSON()`,
-			`console.log(tokens)`,
-			`/**`,
-			`* { type: 'text', value: 'something' }`,
-			`*/`,
-			'```',
-		].join('\n')
-
-		const shiki = new ShikiRenderer(__dirname)
-		await shiki.boot()
-
-		const file = new MarkdownFile(markdown, {})
-		file.transform(shiki.transform)
-		await file.process()
-
-		const code = (file.ast!.children[2] as any).children[0].children[0].value
-		const lines = code.split('class="line')
-
-		assert.isTrue(lines[1].startsWith('"'))
-		assert.isTrue(lines[2].startsWith('"'))
-		assert.isTrue(lines[3].startsWith('"'))
-		assert.isTrue(lines[4].startsWith('"'))
-		assert.isTrue(lines[5].startsWith('"'))
-		assert.isTrue(lines[6].startsWith('"'))
-	})
-
-	test('allow defining the filename', async (assert) => {
+	test('define file name', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
@@ -264,21 +106,349 @@ test.group('Shiki transform', () => {
 		const shiki = new ShikiRenderer(__dirname)
 		await shiki.boot()
 
-		const file = new MarkdownFile(markdown, {})
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
 		file.transform(shiki.transform)
 		await file.process()
 
-		const pre = file.ast!.children[2] as any
-		assert.equal(pre.properties.dataFile, 'foo.js')
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-js'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+			dateFileName: 'foo.js',
+		})
 
-		const code = pre.children[0].children[0].value
-		const lines = code.split('class="line')
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line'])
+		assert.deepEqual(code.children[1].properties.className, ['line'])
+		assert.deepEqual(code.children[2].properties.className, ['line'])
+		assert.deepEqual(code.children[3].properties.className, ['line'])
+		assert.deepEqual(code.children[4].properties.className, ['line'])
+		assert.deepEqual(code.children[5].properties.className, ['line'])
+		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
 
-		assert.isTrue(lines[1].startsWith('"'))
-		assert.isTrue(lines[2].startsWith('"'))
-		assert.isTrue(lines[3].startsWith('"'))
-		assert.isTrue(lines[4].startsWith('"'))
-		assert.isTrue(lines[5].startsWith('"'))
-		assert.isTrue(lines[6].startsWith('"'))
+	test('gracefully ignore invalid thematic block', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```js[foo]',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line'])
+		assert.deepEqual(code.children[1].properties.className, ['line'])
+		assert.deepEqual(code.children[2].properties.className, ['line'])
+		assert.deepEqual(code.children[3].properties.className, ['line'])
+		assert.deepEqual(code.children[4].properties.className, ['line'])
+		assert.deepEqual(code.children[5].properties.className, ['line'])
+		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
+
+	test('gracefully ignore invalid line ranges', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```js{foo-bar}',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-js'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line'])
+		assert.deepEqual(code.children[1].properties.className, ['line'])
+		assert.deepEqual(code.children[2].properties.className, ['line'])
+		assert.deepEqual(code.children[3].properties.className, ['line'])
+		assert.deepEqual(code.children[4].properties.className, ['line'])
+		assert.deepEqual(code.children[5].properties.className, ['line'])
+		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
+})
+
+test.group('Shiki | plain text', () => {
+	test('transform code blocks inside the pre tag', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.equal(code.children.length, pre.properties.dataLinesCount)
+	})
+
+	test('highlight lines using ranges', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```text{2-3,6}',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
+	})
+
+	test('define file name', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```text{}{foo.js}',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+			dateFileName: 'foo.js',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line'])
+		assert.deepEqual(code.children[1].properties.className, ['line'])
+		assert.deepEqual(code.children[2].properties.className, ['line'])
+		assert.deepEqual(code.children[3].properties.className, ['line'])
+		assert.deepEqual(code.children[4].properties.className, ['line'])
+		assert.deepEqual(code.children[5].properties.className, ['line'])
+		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
+})
+
+test.group('Shiki | unsupported language', () => {
+	test('transform code blocks inside the pre tag', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```edge',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.equal(code.children.length, pre.properties.dataLinesCount)
+	})
+
+	test('highlight lines using ranges', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```edge{2-3,6}',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'highlight'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
+	})
+
+	test('define file name', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```edge{}{foo.js}',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`const markdown = new Markdown(contents)`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`* { type: 'text', value: 'something' }`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 7,
+			style: 'background-color: #263238; color: #EEFFFF;',
+			dateFileName: 'foo.js',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line'])
+		assert.deepEqual(code.children[1].properties.className, ['line'])
+		assert.deepEqual(code.children[2].properties.className, ['line'])
+		assert.deepEqual(code.children[3].properties.className, ['line'])
+		assert.deepEqual(code.children[4].properties.className, ['line'])
+		assert.deepEqual(code.children[5].properties.className, ['line'])
+		assert.deepEqual(code.children[6].properties.className, ['line'])
 	})
 })

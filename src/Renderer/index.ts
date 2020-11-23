@@ -8,7 +8,8 @@
  */
 
 import { join } from 'path'
-import visit from 'unist-util-visit'
+import { Parent } from 'unist'
+import map from 'unist-util-map'
 import rangeParser from 'parse-numeric-range'
 import { mdastTypes } from '@dimerapp/markdown'
 import { Theme, IShikiTheme } from 'shiki-themes'
@@ -25,7 +26,6 @@ const DEFAULT_NODE = {
 	lang: null,
 	lineHighlights: null,
 	fileName: null,
-	lineNumbers: false,
 }
 
 /**
@@ -37,7 +37,6 @@ function parseThematicBlock(
 	lang: null | string
 	lineHighlights: null | string
 	fileName: null | string
-	lineNumbers: boolean
 } {
 	/**
 	 * Language property on node is missing
@@ -53,20 +52,7 @@ function parseThematicBlock(
 		lang: language ? language[0] : null,
 		lineHighlights: tokens[1] ? tokens[1].replace('}', '') : null,
 		fileName: tokens[2] ? tokens[2].replace('}', '') : null,
-		lineNumbers: tokens[3] ? tokens[3].replace('}', '') === 'lineNumbers' : false,
 	}
-}
-
-/**
- * Html escape sequences. Copy/pasted from
- * https://github.com/shikijs/shiki/blob/c655ea579930a92a29025b4fb1fce425b17cd947/packages/shiki/src/renderer.ts#L38
- */
-const HTML_ESCAPES = {
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;',
-	'"': '&quot;',
-	"'": '&#39;',
 }
 
 /**
@@ -83,6 +69,12 @@ export class ShikiRenderer {
 	 */
 	private registeredLanguagesIds = {}
 
+	/**
+	 * A mapping of alias to language. For some reason shiki is not working when
+	 * passing alias directly. I can come back and dig deeper
+	 */
+	private languageAliases = {}
+
 	constructor(private basePath: string) {
 		BUNDLED_LANGUAGES.forEach((lang) => this.registerLanguage(lang))
 	}
@@ -94,20 +86,64 @@ export class ShikiRenderer {
 		this.registeredLanguagesIds[language.id] = true
 		if (language.aliases) {
 			language.aliases.forEach((alias) => {
-				this.registeredLanguagesIds[alias] = true
+				this.languageAliases[alias] = language.id
 			})
 		}
 	}
 
 	/**
-	 * Wraps code inside pre tag
+	 * Wraps children inside the pre tag
 	 */
-	private wrapToPre(code: string, lang: string, linesLength: number | null) {
+	private wrapInsidePre(
+		children: Parent[],
+		lang: string,
+		linesLength: number,
+		fileName?: string
+	): Parent {
 		return {
-			code,
-			lang,
-			bgColor: this.themeToUse.bg,
-			linesLength,
+			type: 'element',
+			name: 'pre',
+			data: {
+				hName: 'pre',
+				hProperties: {
+					className: [`language-${lang}`],
+					dataLinesCount: linesLength,
+					style: `background-color: ${this.themeToUse.bg};`,
+					...(fileName ? { dateFileName: fileName } : {}),
+				},
+			},
+			children: [
+				{
+					type: 'element',
+					name: 'code',
+					data: {
+						hName: 'code',
+						hProperties: {},
+					},
+					children: children,
+				},
+			],
+		}
+	}
+
+	/**
+	 * Wraps children inside a line div
+	 */
+	private wrapInsideLine(
+		children: (Parent | mdastTypes.Text)[],
+		index: number,
+		highlights?: number[]
+	): Parent {
+		return {
+			type: 'element',
+			name: 'div',
+			data: {
+				hName: 'div',
+				hProperties: {
+					className: this.getLineClasses(index + 1, highlights),
+				},
+			},
+			children: children,
 		}
 	}
 
@@ -116,10 +152,10 @@ export class ShikiRenderer {
 	 */
 	private getLineClasses(line: number, highlights?: number[]) {
 		if (!highlights) {
-			return 'line'
+			return ['line']
 		}
 
-		return highlights.includes(line) ? 'line highlight' : 'line dim'
+		return highlights.includes(line) ? ['line', 'highlight'] : ['line', 'dim']
 	}
 
 	/**
@@ -128,13 +164,6 @@ export class ShikiRenderer {
 	 */
 	private isPlaintext(language: string) {
 		return ['plaintext', 'txt', 'text'].includes(language)
-	}
-
-	/**
-	 * Escapes html
-	 */
-	private escapeHtml(html: string) {
-		return html.replace(/[&<>"']/g, (chr) => HTML_ESCAPES[chr])
 	}
 
 	/**
@@ -187,7 +216,14 @@ export class ShikiRenderer {
 	/**
 	 * Render code string and get HTML back
 	 */
-	public render(code: string, language?: string, highlights?: number[], countLines?: boolean) {
+	public render(code: string, language?: string, highlights?: number[], fileName?: string) {
+		/**
+		 * Get language for the alias
+		 */
+		if (language && this.languageAliases[language]) {
+			language = this.languageAliases[language]
+		}
+
 		language = language || 'text'
 
 		/**
@@ -203,39 +239,74 @@ export class ShikiRenderer {
 		 * to render them as it is
 		 */
 		if (this.isPlaintext(language)) {
-			const linesLength = countLines ? code.split('\n').length : null
-			return this.wrapToPre(
-				`<div class="line"><span style="color: ${this.themeToUse.fg}">${this.escapeHtml(
-					code
-				)}</span></div>`,
-				'text',
-				linesLength
-			)
+			const lines = code.split('\n')
+
+			/**
+			 * Each line is wrapped inside its own div, allowing line highlights to
+			 * work seamlessly
+			 */
+			const tokens = lines.map((line, index) => {
+				return this.wrapInsideLine(
+					[
+						{
+							type: 'element',
+							name: 'span',
+							data: {
+								hName: 'span',
+								hProperties: {
+									style: `color: ${this.themeToUse.fg};`,
+								},
+							},
+							children: [
+								{
+									type: 'text',
+									value: line,
+								},
+							],
+						},
+					],
+					index,
+					highlights
+				)
+			})
+
+			return this.wrapInsidePre(tokens, 'text', lines.length, fileName)
 		}
 
 		/**
 		 * Tokenize code
 		 */
-		const tokens = this.highlighter!.codeToThemedTokens(code, language, {
+		const shikiTokens = this.highlighter!.codeToThemedTokens(code, language, {
 			includeExplanation: false,
 		})!
 
 		/**
-		 * Build HTML with support for line highlighting
+		 * Converting shiki tokens to mdash tokens
 		 */
-		let html = ''
-		tokens.forEach((group, index) => {
-			html += `<div class="${this.getLineClasses(index + 1, highlights)}">`
-
-			group.forEach((token) => {
-				html += `<span style="color: ${token.color || this.themeToUse.fg}">${this.escapeHtml(
-					token.content
-				)}</span>`
+		const tokens = shikiTokens.map((group, index) => {
+			const spans = group.map((token) => {
+				return {
+					type: 'element',
+					name: 'span',
+					data: {
+						hName: 'span',
+						hProperties: {
+							style: `color: ${token.color || this.themeToUse.fg};`,
+						},
+					},
+					children: [
+						{
+							type: 'text',
+							value: token.content,
+						},
+					],
+				}
 			})
-			html += `</div>`
+
+			return this.wrapInsideLine(spans, index, highlights)
 		})
 
-		return this.wrapToPre(html, language, countLines ? tokens.length : null)
+		return this.wrapInsidePre(tokens, language, shikiTokens.length, fileName)
 	}
 
 	/**
@@ -243,14 +314,16 @@ export class ShikiRenderer {
 	 */
 	public transform = function transform() {
 		return (tree: mdastTypes.Content) => {
-			return visit(tree, ['code'], (node) => {
+			return map(tree, (node) => {
+				if (node.type !== 'code') {
+					return node
+				}
+
 				/**
 				 * Parsing the content next to "```". Which is usually
 				 * "```{1-3}{filename}"
 				 */
-				const { lang, lineHighlights, fileName, lineNumbers } = parseThematicBlock(
-					node.lang as string
-				)
+				const { lang, lineHighlights, fileName } = parseThematicBlock(node.lang as string)
 
 				/**
 				 * Convert ranges "1-3,4-6" to an array of line numbers
@@ -260,48 +333,12 @@ export class ShikiRenderer {
 				/**
 				 * Render plain text to code
 				 */
-				const { code, lang: processedLang, bgColor, linesLength } = this.render(
+				return this.render(
 					node.value,
 					lang,
 					highlights && highlights.length ? highlights : undefined,
-					lineNumbers
+					fileName
 				)
-
-				/**
-				 * Mutate the node type to self handle the creation
-				 * of `pre` tag
-				 */
-				node.type = 'containerDirective'
-				node.name = 'pre'
-
-				/**
-				 * Define hast attributes
-				 */
-				node.data = node.data || {}
-				node.data.hName = 'pre'
-				node.data.hProperties = {
-					className: ['dimer-highlight', `language-${processedLang}`],
-					style: `background-color: ${bgColor}`,
-					dataFile: fileName,
-					...(linesLength ? { lines: linesLength } : {}),
-				}
-
-				/**
-				 * Create code and pre children
-				 */
-				node.data.hChildren = [
-					{
-						type: 'element',
-						tagName: 'code',
-						properties: {},
-						children: [
-							{
-								type: 'text',
-								value: code,
-							},
-						],
-					},
-				]
 			})
 		}
 	}.bind(this)

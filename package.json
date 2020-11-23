@@ -81,6 +81,6 @@
     "shiki": "^0.2.7",
     "shiki-languages": "^0.2.7",
     "shiki-themes": "^0.2.7",
-    "unist-util-visit": "^2.0.3"
+    "unist-util-map": "^2.0.1"
   }
 }
