@@ -10,50 +10,12 @@
 import { join } from 'path'
 import { Parent } from 'unist'
 import map from 'unist-util-map'
-import rangeParser from 'parse-numeric-range'
-import { mdastTypes } from '@dimerapp/markdown'
 import { Theme, IShikiTheme } from 'shiki-themes'
+import { mdastTypes, Code } from '@dimerapp/markdown'
 import { ILanguageRegistration } from 'shiki-languages'
 import { getHighlighter, loadTheme, getTheme, BUNDLED_LANGUAGES } from 'shiki'
 
 type UnWrapPromise<T> = T extends PromiseLike<infer R> ? R : T
-
-/**
- * Default response for the parseThematicBlock when no
- * lang is defined
- */
-const DEFAULT_NODE = {
-	lang: null,
-	lineHighlights: null,
-	fileName: null,
-}
-
-/**
- * Parse thematic block next to "```"
- */
-function parseThematicBlock(
-	lang: string
-): {
-	lang: null | string
-	lineHighlights: null | string
-	fileName: null | string
-} {
-	/**
-	 * Language property on node is missing
-	 */
-	if (!lang) {
-		return DEFAULT_NODE
-	}
-
-	const tokens = lang.split('{')
-	const language = tokens[0].match(/^[^ \t]+(?=[ \t]|$)/)
-
-	return {
-		lang: language ? language[0] : null,
-		lineHighlights: tokens[1] ? tokens[1].replace('}', '') : null,
-		fileName: tokens[2] ? tokens[2].replace('}', '') : null,
-	}
-}
 
 /**
  * Shiki renderer to render codeblocks using vscode themes and languages.
@@ -314,30 +276,21 @@ export class ShikiRenderer {
 	 */
 	public transform = function transform() {
 		return (tree: mdastTypes.Content) => {
-			return map(tree, (node) => {
+			return map(tree, (node: Code) => {
 				if (node.type !== 'code') {
 					return node
 				}
-
-				/**
-				 * Parsing the content next to "```". Which is usually
-				 * "```{1-3}{filename}"
-				 */
-				const { lang, lineHighlights, fileName } = parseThematicBlock(node.lang as string)
-
-				/**
-				 * Convert ranges "1-3,4-6" to an array of line numbers
-				 */
-				const highlights = lineHighlights ? rangeParser(lineHighlights) : undefined
 
 				/**
 				 * Render plain text to code
 				 */
 				return this.render(
 					node.value,
-					lang,
-					highlights && highlights.length ? highlights : undefined,
-					fileName
+					node.meta.lang,
+					node.meta.lineHighlights && node.meta.lineHighlights.length
+						? node.meta.lineHighlights
+						: undefined,
+					node.meta.fileName
 				)
 			})
 		}
