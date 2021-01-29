@@ -47,17 +47,21 @@ test.group('Shiki | grammar', () => {
 		assert.equal(code.children.length, pre.properties.dataLinesCount)
 	})
 
-	test('highlight lines using ranges', async (assert) => {
+	test('highlight lines', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```js{2-3,6}',
+			'```js',
 			`const Markdown = require('@dimerapp/markdown')`,
+			`// highlight-start`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
+			`// highlight-end`,
 			`console.log(tokens)`,
 			`/**`,
+			`// highlight-start`,
 			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
 			`*/`,
 			'```',
 		].join('\n')
@@ -92,7 +96,7 @@ test.group('Shiki | grammar', () => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```js{}{foo.js}',
+			'```js{foo.js}',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -117,7 +121,7 @@ test.group('Shiki | grammar', () => {
 			className: ['language-javascript'],
 			dataLinesCount: 7,
 			style: 'background-color: #263238;',
-			dateFileName: 'foo.js',
+			dataFileName: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -171,17 +175,24 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(code.children[6].properties.className, ['line'])
 	})
 
-	test('gracefully ignore invalid line ranges', async (assert) => {
+	test('highlight inserts and deletes', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```js{foo-bar}',
+			'```js',
 			`const Markdown = require('@dimerapp/markdown')`,
+			`// delete-start`,
+			`const markdown = new Markdown({})`,
+			`// delete-end`,
+			`// insert-start`,
 			`const markdown = new Markdown(contents)`,
+			`// insert-end`,
 			`const tokens = await markdown.toJSON()`,
 			`console.log(tokens)`,
 			`/**`,
+			`// highlight-start`,
 			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
 			`*/`,
 			'```',
 		].join('\n')
@@ -198,18 +209,18 @@ test.group('Shiki | grammar', () => {
 		assert.equal(pre.tagName, 'pre')
 		assert.deepEqual(pre.properties, {
 			className: ['language-javascript'],
-			dataLinesCount: 7,
+			dataLinesCount: 8,
 			style: 'background-color: #263238;',
 		})
 
 		const code = pre.children[0]
-		assert.deepEqual(code.children[0].properties.className, ['line'])
-		assert.deepEqual(code.children[1].properties.className, ['line'])
-		assert.deepEqual(code.children[2].properties.className, ['line'])
-		assert.deepEqual(code.children[3].properties.className, ['line'])
-		assert.deepEqual(code.children[4].properties.className, ['line'])
-		assert.deepEqual(code.children[5].properties.className, ['line'])
-		assert.deepEqual(code.children[6].properties.className, ['line'])
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight-delete'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight-insert'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'highlight'])
 	})
 })
 
@@ -249,17 +260,21 @@ test.group('Shiki | plain text', () => {
 		assert.equal(code.children.length, pre.properties.dataLinesCount)
 	})
 
-	test('highlight lines using ranges', async (assert) => {
+	test('highlight lines', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```text{2-3,6}',
+			'```text',
 			`const Markdown = require('@dimerapp/markdown')`,
+			`// highlight-start`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
+			`// highlight-end`,
 			`console.log(tokens)`,
 			`/**`,
+			`// highlight-start`,
 			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
 			`*/`,
 			'```',
 		].join('\n')
@@ -294,7 +309,7 @@ test.group('Shiki | plain text', () => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```text{}{foo.js}',
+			'```text{foo.js}',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -319,7 +334,7 @@ test.group('Shiki | plain text', () => {
 			className: ['language-text'],
 			dataLinesCount: 7,
 			style: 'background-color: #263238;',
-			dateFileName: 'foo.js',
+			dataFileName: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -330,6 +345,54 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(code.children[4].properties.className, ['line'])
 		assert.deepEqual(code.children[5].properties.className, ['line'])
 		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
+
+	test('highlight inserts and deletes', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```text',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`// delete-start`,
+			`const markdown = new Markdown({})`,
+			`// delete-end`,
+			`// insert-start`,
+			`const markdown = new Markdown(contents)`,
+			`// insert-end`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`// highlight-start`,
+			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 8,
+			style: 'background-color: #263238;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight-delete'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight-insert'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'highlight'])
 	})
 })
 
@@ -373,13 +436,17 @@ test.group('Shiki | unsupported language', () => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```edge{2-3,6}',
+			'```edge',
 			`const Markdown = require('@dimerapp/markdown')`,
+			`// highlight-start`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
+			`// highlight-end`,
 			`console.log(tokens)`,
 			`/**`,
+			`// highlight-start`,
 			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
 			`*/`,
 			'```',
 		].join('\n')
@@ -414,7 +481,7 @@ test.group('Shiki | unsupported language', () => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```edge{}{foo.js}',
+			'```edge{foo.js}',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -439,7 +506,7 @@ test.group('Shiki | unsupported language', () => {
 			className: ['language-text'],
 			dataLinesCount: 7,
 			style: 'background-color: #263238;',
-			dateFileName: 'foo.js',
+			dataFileName: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -450,5 +517,53 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(code.children[4].properties.className, ['line'])
 		assert.deepEqual(code.children[5].properties.className, ['line'])
 		assert.deepEqual(code.children[6].properties.className, ['line'])
+	})
+
+	test('highlight inserts and deletes', async (assert) => {
+		const markdown = [
+			`Pre sample`,
+			'',
+			'```edge',
+			`const Markdown = require('@dimerapp/markdown')`,
+			`// delete-start`,
+			`const markdown = new Markdown({})`,
+			`// delete-end`,
+			`// insert-start`,
+			`const markdown = new Markdown(contents)`,
+			`// insert-end`,
+			`const tokens = await markdown.toJSON()`,
+			`console.log(tokens)`,
+			`/**`,
+			`// highlight-start`,
+			`* { type: 'text', value: 'something' }`,
+			`// highlight-end`,
+			`*/`,
+			'```',
+		].join('\n')
+
+		const shiki = new ShikiRenderer(__dirname)
+		await shiki.boot()
+
+		const file = new MarkdownFile(markdown, { enableDirectives: true })
+		file.transform(shiki.transform)
+		await file.process()
+
+		const pre = file.ast?.children[2] as any
+		assert.equal(pre.type, 'element')
+		assert.equal(pre.tagName, 'pre')
+		assert.deepEqual(pre.properties, {
+			className: ['language-text'],
+			dataLinesCount: 8,
+			style: 'background-color: #263238;',
+		})
+
+		const code = pre.children[0]
+		assert.deepEqual(code.children[0].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[1].properties.className, ['line', 'highlight-delete'])
+		assert.deepEqual(code.children[2].properties.className, ['line', 'highlight-insert'])
+		assert.deepEqual(code.children[3].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[5].properties.className, ['line', 'dim'])
+		assert.deepEqual(code.children[6].properties.className, ['line', 'highlight'])
 	})
 })

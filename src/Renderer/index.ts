@@ -60,7 +60,7 @@ export class ShikiRenderer {
 		children: Parent[],
 		lang: string,
 		linesLength: number,
-		fileName?: string
+		fileName: string | null
 	): Parent {
 		return {
 			type: 'element',
@@ -71,7 +71,7 @@ export class ShikiRenderer {
 					className: [`language-${lang}`],
 					dataLinesCount: linesLength,
 					style: `background-color: ${this.themeToUse.bg};`,
-					...(fileName ? { dateFileName: fileName } : {}),
+					...(fileName ? { dataFileName: fileName } : {}),
 				},
 			},
 			children: [
@@ -94,7 +94,8 @@ export class ShikiRenderer {
 	private wrapInsideLine(
 		children: (Parent | mdastTypes.Text)[],
 		index: number,
-		highlights?: number[]
+		meta: Code['meta'],
+		hasHighlights: boolean
 	): Parent {
 		return {
 			type: 'element',
@@ -102,7 +103,7 @@ export class ShikiRenderer {
 			data: {
 				hName: 'div',
 				hProperties: {
-					className: this.getLineClasses(index + 1, highlights),
+					className: this.getLineClasses(index + 1, meta, hasHighlights),
 				},
 			},
 			children: children,
@@ -112,12 +113,20 @@ export class ShikiRenderer {
 	/**
 	 * Returns the classes to the used by the code line
 	 */
-	private getLineClasses(line: number, highlights?: number[]) {
-		if (!highlights) {
-			return ['line']
+	private getLineClasses(line: number, meta: Code['meta'], hasHighlights: boolean) {
+		if (meta.inserts.includes(line)) {
+			return ['line', 'highlight-insert']
 		}
 
-		return highlights.includes(line) ? ['line', 'highlight'] : ['line', 'dim']
+		if (meta.deletes.includes(line)) {
+			return ['line', 'highlight-delete']
+		}
+
+		if (meta.highlights.includes(line)) {
+			return ['line', 'highlight']
+		}
+
+		return hasHighlights ? ['line', 'dim'] : ['line']
 	}
 
 	/**
@@ -178,7 +187,10 @@ export class ShikiRenderer {
 	/**
 	 * Render code string and get HTML back
 	 */
-	public render(code: string, language?: string, highlights?: number[], fileName?: string) {
+	public render(code: string, meta: Code['meta'], hasHighlights: boolean) {
+		const { lang, fileName } = meta
+		let language = lang
+
 		/**
 		 * Get language for the alias
 		 */
@@ -228,7 +240,8 @@ export class ShikiRenderer {
 						},
 					],
 					index,
-					highlights
+					meta,
+					hasHighlights
 				)
 			})
 
@@ -243,7 +256,7 @@ export class ShikiRenderer {
 		})!
 
 		/**
-		 * Converting shiki tokens to mdash tokens
+		 * Converting shiki tokens to mhast tokens
 		 */
 		const tokens = shikiTokens.map((group, index) => {
 			const spans = group.map((token) => {
@@ -265,7 +278,7 @@ export class ShikiRenderer {
 				}
 			})
 
-			return this.wrapInsideLine(spans, index, highlights)
+			return this.wrapInsideLine(spans, index, meta, hasHighlights)
 		})
 
 		return this.wrapInsidePre(tokens, language, shikiTokens.length, fileName)
@@ -281,17 +294,13 @@ export class ShikiRenderer {
 					return node
 				}
 
+				const hasHighlights =
+					node.meta.highlights.length || node.meta.inserts.length || node.meta.deletes.length
+
 				/**
 				 * Render plain text to code
 				 */
-				return this.render(
-					node.value,
-					node.meta.lang,
-					node.meta.lineHighlights && node.meta.lineHighlights.length
-						? node.meta.lineHighlights
-						: undefined,
-					node.meta.fileName
-				)
+				return this.render(node.value, node.meta, hasHighlights)
 			})
 		}
 	}.bind(this)
