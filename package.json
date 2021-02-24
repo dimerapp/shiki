@@ -77,7 +77,7 @@
     "anyBranch": false
   },
   "dependencies": {
-    "shiki": "^0.2.7",
+    "shiki": "^0.9.1",
     "shiki-languages": "^0.2.7",
     "shiki-themes": "^0.2.7",
     "unist-util-map": "^2.0.1"
