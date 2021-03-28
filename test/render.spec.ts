@@ -40,7 +40,7 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -79,7 +79,7 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -92,11 +92,12 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
 	})
 
-	test('define file name', async (assert) => {
+	test('define codeblock title', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```js{foo.js}',
+			'```js',
+			'// title: foo.js',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -120,8 +121,8 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-javascript'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
-			dataFileName: 'foo.js',
+			style: 'background-color: #292D3E;',
+			dataTitle: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -162,7 +163,7 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -210,7 +211,7 @@ test.group('Shiki | grammar', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-javascript'],
 			dataLinesCount: 8,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -253,7 +254,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -292,7 +293,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -305,11 +306,12 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
 	})
 
-	test('define file name', async (assert) => {
+	test('define codeblock title', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```text{foo.js}',
+			'```text',
+			'// title: foo.js',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -333,8 +335,8 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
-			dataFileName: 'foo.js',
+			style: 'background-color: #292D3E;',
+			dataTitle: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -382,7 +384,7 @@ test.group('Shiki | plain text', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 8,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -425,7 +427,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -464,7 +466,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]
@@ -477,11 +479,12 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
 	})
 
-	test('define file name', async (assert) => {
+	test('define codeblock title', async (assert) => {
 		const markdown = [
 			`Pre sample`,
 			'',
-			'```edge{foo.js}',
+			'```edge',
+			'// title: foo.js',
 			`const Markdown = require('@dimerapp/markdown')`,
 			`const markdown = new Markdown(contents)`,
 			`const tokens = await markdown.toJSON()`,
@@ -505,8 +508,8 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 7,
-			style: 'background-color: #263238;',
-			dataFileName: 'foo.js',
+			style: 'background-color: #292D3E;',
+			dataTitle: 'foo.js',
 		})
 
 		const code = pre.children[0]
@@ -554,7 +557,7 @@ test.group('Shiki | unsupported language', () => {
 		assert.deepEqual(pre.properties, {
 			className: ['language-text'],
 			dataLinesCount: 8,
-			style: 'background-color: #263238;',
+			style: 'background-color: #292D3E;',
 		})
 
 		const code = pre.children[0]

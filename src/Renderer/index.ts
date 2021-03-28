@@ -10,10 +10,15 @@
 import { join } from 'path'
 import { Parent } from 'unist'
 import map from 'unist-util-map'
-import { Theme, IShikiTheme } from 'shiki-themes'
 import { mdastTypes, Code } from '@dimerapp/markdown'
-import { ILanguageRegistration } from 'shiki-languages'
-import { getHighlighter, loadTheme, getTheme, BUNDLED_LANGUAGES } from 'shiki'
+import {
+	Theme,
+	loadTheme,
+	IShikiTheme,
+	getHighlighter,
+	BUNDLED_LANGUAGES,
+	ILanguageRegistration,
+} from 'shiki'
 
 type UnWrapPromise<T> = T extends PromiseLike<infer R> ? R : T
 
@@ -21,7 +26,16 @@ type UnWrapPromise<T> = T extends PromiseLike<infer R> ? R : T
  * Shiki renderer to render codeblocks using vscode themes and languages.
  */
 export class ShikiRenderer {
-	private themeToUse: IShikiTheme
+	/**
+	 * Reference to the theme to use
+	 */
+	private themeToUse: IShikiTheme | string = 'material-theme-palenight'
+
+	/**
+	 * Custom theme to load
+	 */
+	private customThemeToLoad: string
+
 	private shikiLanguages: ILanguageRegistration[] = []
 	private highlighter?: UnWrapPromise<ReturnType<typeof getHighlighter>>
 
@@ -60,7 +74,7 @@ export class ShikiRenderer {
 		children: Parent[],
 		lang: string,
 		linesLength: number,
-		fileName: string | null
+		title: string | null
 	): Parent {
 		return {
 			type: 'element',
@@ -70,8 +84,8 @@ export class ShikiRenderer {
 				hProperties: {
 					className: [`language-${lang}`],
 					dataLinesCount: linesLength,
-					style: `background-color: ${this.themeToUse.bg};`,
-					...(fileName ? { dataFileName: fileName } : {}),
+					style: `background-color: ${this.highlighter!.getBackgroundColor()};`,
+					...(title ? { dataTitle: title } : {}),
 				},
 			},
 			children: [
@@ -138,18 +152,19 @@ export class ShikiRenderer {
 	}
 
 	/**
-	 * Use an existing theme
+	 * Define the define to use
 	 */
 	public useTheme(name: Theme): this {
-		this.themeToUse = getTheme(name)
+		this.themeToUse = name
 		return this
 	}
 
 	/**
-	 * Load a custom theme
+	 * Load a custom theme. Calling this method will override "useTheme"
+	 * selection
 	 */
 	public loadTheme(pathToTheme: string): this {
-		this.themeToUse = loadTheme(join(this.basePath, pathToTheme))
+		this.customThemeToLoad = pathToTheme
 		return this
 	}
 
@@ -171,11 +186,8 @@ export class ShikiRenderer {
 			return
 		}
 
-		/**
-		 * Use "material-theme-default" when no theme is defined.
-		 */
-		if (!this.themeToUse) {
-			this.useTheme('material-theme-default')
+		if (this.customThemeToLoad) {
+			this.themeToUse = await loadTheme(join(this.basePath, this.customThemeToLoad))
 		}
 
 		this.highlighter = await getHighlighter({
@@ -187,9 +199,14 @@ export class ShikiRenderer {
 	/**
 	 * Render code string and get HTML back
 	 */
-	public render(code: string, meta: Code['meta'], hasHighlights: boolean) {
-		const { lang, fileName } = meta
-		let language = lang
+	public render(codeblock: Code) {
+		const hasHighlights = !!(
+			codeblock.meta.highlights.length ||
+			codeblock.meta.inserts.length ||
+			codeblock.meta.deletes.length
+		)
+
+		let language = codeblock.lang
 
 		/**
 		 * Get language for the alias
@@ -213,7 +230,7 @@ export class ShikiRenderer {
 		 * to render them as it is
 		 */
 		if (this.isPlaintext(language)) {
-			const lines = code.split('\n')
+			const lines = codeblock.value.split('\n')
 
 			/**
 			 * Each line is wrapped inside its own div, allowing line highlights to
@@ -228,7 +245,7 @@ export class ShikiRenderer {
 							data: {
 								hName: 'span',
 								hProperties: {
-									style: `color: ${this.themeToUse.fg};`,
+									style: `color: ${this.highlighter!.getForegroundColor()};`,
 								},
 							},
 							children: [
@@ -240,18 +257,18 @@ export class ShikiRenderer {
 						},
 					],
 					index,
-					meta,
+					codeblock.meta,
 					hasHighlights
 				)
 			})
 
-			return this.wrapInsidePre(tokens, 'text', lines.length, fileName)
+			return this.wrapInsidePre(tokens, 'text', lines.length, codeblock.meta.title)
 		}
 
 		/**
 		 * Tokenize code
 		 */
-		const shikiTokens = this.highlighter!.codeToThemedTokens(code, language, {
+		const shikiTokens = this.highlighter!.codeToThemedTokens(codeblock.value, language, undefined, {
 			includeExplanation: false,
 		})!
 
@@ -278,10 +295,10 @@ export class ShikiRenderer {
 				}
 			})
 
-			return this.wrapInsideLine(spans, index, meta, hasHighlights)
+			return this.wrapInsideLine(spans, index, codeblock.meta, hasHighlights)
 		})
 
-		return this.wrapInsidePre(tokens, language, shikiTokens.length, fileName)
+		return this.wrapInsidePre(tokens, language, shikiTokens.length, codeblock.meta.title)
 	}
 
 	/**
@@ -294,13 +311,10 @@ export class ShikiRenderer {
 					return node
 				}
 
-				const hasHighlights =
-					node.meta.highlights.length || node.meta.inserts.length || node.meta.deletes.length
-
 				/**
 				 * Render plain text to code
 				 */
-				return this.render(node.value, node.meta, hasHighlights)
+				return this.render(node)
 			})
 		}
 	}.bind(this)
