@@ -172,7 +172,10 @@ export class ShikiRenderer {
    * Load a custom language
    */
   public loadLanguage(language: ILanguageRegistration): this {
-    language.path = join(this.basePath, language.path)
+    if (language.path) {
+      language.path = join(this.basePath, language.path)
+    }
+
     this.shikiLanguages.push(language)
     this.registerLanguage(language)
     return this
@@ -283,7 +286,7 @@ export class ShikiRenderer {
           data: {
             hName: 'span',
             hProperties: {
-              style: `color: ${token.color || this.themeToUse.fg};`,
+              style: `color: ${token.color || this.highlighter!.getForegroundColor()};`,
             },
           },
           children: [
