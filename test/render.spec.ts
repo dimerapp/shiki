@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'path'
 import test from 'japa'
 import { MarkdownFile } from '@dimerapp/markdown'
 import { ShikiRenderer } from '../src/Renderer'
@@ -222,6 +223,43 @@ test.group('Shiki | grammar', () => {
     assert.deepEqual(code.children[4].properties.className, ['line', 'dim'])
     assert.deepEqual(code.children[5].properties.className, ['line', 'dim'])
     assert.deepEqual(code.children[6].properties.className, ['line', 'highlight'])
+  })
+
+  test('register a custom language', async (assert) => {
+    const markdown = [
+      `Pre sample`,
+      '```ts',
+      'var a = 1',
+      '```',
+      '',
+      '```edge',
+      `@set('foo', 'bar')`,
+      '```',
+    ].join('\n')
+
+    const shiki = new ShikiRenderer(__dirname)
+    shiki.loadLanguage({
+      scopeName: 'text.html.edge',
+      id: 'edge',
+      path: '../edge.tmLanguage.json',
+    })
+    await shiki.boot()
+
+    const file = new MarkdownFile(markdown, { enableDirectives: true })
+    file.transform(shiki.transform)
+    await file.process()
+
+    const pre = file.ast?.children[4] as any
+    assert.equal(pre.type, 'element')
+    assert.equal(pre.tagName, 'pre')
+    assert.deepEqual(pre.properties, {
+      className: ['language-edge'],
+      dataLinesCount: 1,
+      style: 'background-color: #292D3E;',
+    })
+
+    const code = pre.children[0]
+    assert.equal(code.children.length, pre.properties.dataLinesCount)
   })
 })
 

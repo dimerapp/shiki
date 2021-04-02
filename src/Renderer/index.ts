@@ -36,7 +36,9 @@ export class ShikiRenderer {
    */
   private customThemeToLoad: string
 
-  private shikiLanguages: ILanguageRegistration[] = []
+  private shikiLanguages: ILanguageRegistration[] = ([] as ILanguageRegistration[]).concat(
+    BUNDLED_LANGUAGES
+  )
   private highlighter?: UnWrapPromise<ReturnType<typeof getHighlighter>>
 
   /**
