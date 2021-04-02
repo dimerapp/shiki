@@ -1,6 +1,6 @@
 {
   "name": "@dimerapp/shiki",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Shiki processor",
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
