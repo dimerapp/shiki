@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'path'
 import test from 'japa'
 import { MarkdownFile } from '@dimerapp/markdown'
 import { ShikiRenderer } from '../src/Renderer'
