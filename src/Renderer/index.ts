@@ -122,7 +122,7 @@ export class ShikiRenderer {
           className: this.getLineClasses(index + 1, meta, hasHighlights),
         },
       },
-      children: children,
+      children: children.concat([{ type: 'text', value: '\n' }]),
     }
   }
 
