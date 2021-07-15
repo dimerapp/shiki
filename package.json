@@ -76,7 +76,7 @@
     "anyBranch": false
   },
   "dependencies": {
-    "shiki": "^0.9.3",
+    "shiki": "^0.9.5",
     "unist-util-map": "^2.0.1"
   },
   "directories": {
