@@ -7,93 +7,112 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'path'
-import { Parent } from 'unist'
-import map from 'unist-util-map'
-import { mdastTypes, Code } from '@dimerapp/markdown'
+import { map } from 'unist-util-map'
+import { fileURLToPath } from 'node:url'
+import type {
+  mdastTypes,
+  Code,
+  ContainerDirective,
+  Directives,
+  Node,
+} from '@dimerapp/markdown/types'
 import {
   Theme,
   loadTheme,
   IShikiTheme,
+  Highlighter,
   getHighlighter,
+  BUNDLED_THEMES,
   BUNDLED_LANGUAGES,
   ILanguageRegistration,
 } from 'shiki'
-
-type UnWrapPromise<T> = T extends PromiseLike<infer R> ? R : T
 
 /**
  * Shiki renderer to render codeblocks using vscode themes and languages.
  */
 export class ShikiRenderer {
   /**
-   * Reference to the theme to use
+   * Reference to the theme to use. The value can be one of the
+   * following.
+   *
+   * - Absolute path to a theme file.
+   * - Shorthand name for a recognized theme like "material-palenight"
+   * - Or the JSON blob for the theme
    */
-  private themeToUse: IShikiTheme | string = 'material-theme-palenight'
+  #theme: IShikiTheme | Theme | string = 'material-palenight'
 
   /**
-   * Custom theme to load
+   * A collection of custom languages to load.
    */
-  private customThemeToLoad: string
-
-  private shikiLanguages: ILanguageRegistration[] = ([] as ILanguageRegistration[]).concat(
-    BUNDLED_LANGUAGES
-  )
-  private highlighter?: UnWrapPromise<ReturnType<typeof getHighlighter>>
+  #languages: ILanguageRegistration[] = []
 
   /**
-   * An object of registered languages. We create the object since the array can be
-   * quite big and looping over all the items will take time.
+   * Reference to shiki highlighter. It is instantiated after
+   * the "boot" method call.
    */
-  private registeredLanguagesIds = {}
+  #highlighter?: Highlighter
 
   /**
-   * A mapping of alias to language. For some reason shiki is not working when
-   * passing alias directly. I can come back and dig deeper
+   * A set of registered languages id. This allows to know the known languages
+   * and fallback to text when user defined language in the codeblock is
+   * not a known language.
    */
-  private languageAliases = {}
+  #registeredLanguagesIds: Set<string> = new Set()
 
-  constructor(private basePath: string) {
-    BUNDLED_LANGUAGES.forEach((lang) => this.registerLanguage(lang))
+  /**
+   * A map of language aliases
+   */
+  #languageAliases: Map<string, string> = new Map()
+
+  constructor() {
+    /**
+     * Registering bundled languages. This ensures the user only need
+     * to register custom languages.
+     */
+    for (const language of BUNDLED_LANGUAGES) {
+      this.#registerLanguage(language)
+    }
   }
 
   /**
-   * Register the language id and aliases
+   * Register the language id and its aliases
    */
-  private registerLanguage(language: ILanguageRegistration) {
-    this.registeredLanguagesIds[language.id] = true
-    if (language.aliases) {
-      language.aliases.forEach((alias) => {
-        this.languageAliases[alias] = language.id
-      })
+  #registerLanguage(language: ILanguageRegistration) {
+    this.#registeredLanguagesIds.add(language.id)
+
+    for (const alias of language.aliases || []) {
+      this.#languageAliases.set(alias, language.id)
     }
   }
 
   /**
    * Wraps children inside the pre tag
    */
-  private wrapInsidePre(
-    children: Parent[],
+  #wrapInsidePre(
+    children: (mdastTypes.Content | Directives)[],
     lang: string,
     linesLength: number,
     title: string | null
-  ): Parent {
+  ): ContainerDirective {
     return {
-      type: 'element',
+      type: 'containerDirective',
       name: 'pre',
+      attributes: {},
       data: {
         hName: 'pre',
         hProperties: {
           className: [`language-${lang}`],
           dataLinesCount: linesLength,
-          style: `background-color: ${this.highlighter!.getBackgroundColor()};`,
+          style: `background-color: ${this.#highlighter!.getBackgroundColor()};`,
           ...(title ? { dataTitle: title } : {}),
         },
+        isMacro: false,
       },
       children: [
         {
-          type: 'element',
+          type: 'containerDirective',
           name: 'code',
+          attributes: {},
           data: {
             hName: 'code',
             hProperties: {},
@@ -107,19 +126,21 @@ export class ShikiRenderer {
   /**
    * Wraps children inside a line div
    */
-  private wrapInsideLine(
-    children: (Parent | mdastTypes.Text)[],
+  #wrapInsideLine(
+    children: (mdastTypes.Content | Directives)[],
     index: number,
     meta: Code['meta'],
     hasHighlights: boolean
-  ): Parent {
+  ): ContainerDirective {
     return {
-      type: 'element',
+      type: 'containerDirective',
       name: 'div',
+      attributes: {},
       data: {
+        isMacro: false,
         hName: 'div',
         hProperties: {
-          className: this.getLineClasses(index + 1, meta, hasHighlights),
+          className: this.#getLineClasses(index + 1, meta, hasHighlights),
         },
       },
       children: children.concat([{ type: 'text', value: '\n' }]),
@@ -129,7 +150,7 @@ export class ShikiRenderer {
   /**
    * Returns the classes to the used by the code line
    */
-  private getLineClasses(line: number, meta: Code['meta'], hasHighlights: boolean) {
+  #getLineClasses(line: number, meta: Code['meta'], hasHighlights: boolean) {
     if (meta.inserts.includes(line)) {
       return ['line', 'highlight-insert']
     }
@@ -149,84 +170,88 @@ export class ShikiRenderer {
    * Returns true when language id is one of the plain text
    * languages.
    */
-  private isPlaintext(language: string) {
+  #isPlaintext(language: string) {
     return ['plaintext', 'txt', 'text'].includes(language)
   }
 
   /**
-   * Define the define to use
+   * Returns the language name from an alias
    */
-  public useTheme(name: Theme): this {
-    this.themeToUse = name
-    return this
+  #getLanguageFromAlias(language?: string | null): string | undefined {
+    if (!language) {
+      return
+    }
+
+    return this.#languageAliases.get(language) || language
   }
 
   /**
-   * Load a custom theme. Calling this method will override "useTheme"
-   * selection
+   * Define the theme to use. The value can be one of the
+   * following.
+   *
+   * - Absolute path to a theme file.
+   * - Shorthand name for a recognized theme like "material-palenight"
+   * - Or the JSON blob for the theme
    */
-  public loadTheme(pathToTheme: string): this {
-    this.customThemeToLoad = pathToTheme
+  useTheme(name: Theme | string | URL | IShikiTheme): this {
+    this.#theme = name instanceof URL ? fileURLToPath(name) : name
     return this
   }
 
   /**
    * Load a custom language
    */
-  public loadLanguage(language: ILanguageRegistration): this {
-    if (language.path) {
-      language.path = join(this.basePath, language.path)
-    }
-
-    this.shikiLanguages.push(language)
-    this.registerLanguage(language)
+  loadLanguage(language: ILanguageRegistration): this {
+    this.#languages.push(language)
+    this.#registerLanguage(language)
     return this
   }
 
   /**
-   * Boot to instantiate the highlighter. Must be done only once
+   * Boot to instantiate the highlighter. Calling the boot
+   * method multiple times returns in a noop.
    */
-  public async boot() {
-    if (this.highlighter) {
+  async boot() {
+    if (this.#highlighter) {
       return
     }
 
-    if (this.customThemeToLoad) {
-      this.themeToUse = await loadTheme(join(this.basePath, this.customThemeToLoad))
+    /**
+     * Load them when it is a string and not a known bundled theme
+     * shorthand name
+     */
+    if (typeof this.#theme === 'string') {
+      if (!BUNDLED_THEMES.find((theme) => theme === this.#theme)) {
+        this.#theme = await loadTheme(this.#theme)
+      }
     }
 
-    this.highlighter = await getHighlighter({
-      langs: this.shikiLanguages,
-      theme: this.themeToUse,
+    this.#highlighter = await getHighlighter({
+      theme: this.#theme,
     })
+
+    for (let language of this.#languages) {
+      await this.#highlighter.loadLanguage(language)
+    }
   }
 
   /**
    * Render code string and get HTML back
    */
-  public render(codeblock: Code) {
+  render(codeblock: Code) {
     const hasHighlights = !!(
       codeblock.meta.highlights.length ||
       codeblock.meta.inserts.length ||
       codeblock.meta.deletes.length
     )
 
-    let language = codeblock.lang
+    let language = this.#getLanguageFromAlias(codeblock.lang) || 'text'
 
     /**
-     * Get language for the alias
-     */
-    if (language && this.languageAliases[language]) {
-      language = this.languageAliases[language]
-    }
-
-    language = language || 'text'
-
-    /**
-     * Render as text when language is not registered. Otherwise shiki will
+     * Render as text when language is not recognized. Otherwise shiki will
      * raise an error
      */
-    if (!this.registeredLanguagesIds[language]) {
+    if (!this.#registeredLanguagesIds.has(language)) {
       language = 'text'
     }
 
@@ -234,7 +259,7 @@ export class ShikiRenderer {
      * Plain text languages cannot be tokenized and hence we have
      * to render them as it is
      */
-    if (this.isPlaintext(language)) {
+    if (this.#isPlaintext(language)) {
       const lines = codeblock.value.split('\n')
 
       /**
@@ -242,15 +267,16 @@ export class ShikiRenderer {
        * work seamlessly
        */
       const tokens = lines.map((line, index) => {
-        return this.wrapInsideLine(
+        return this.#wrapInsideLine(
           [
             {
-              type: 'element',
+              type: 'leafDirective',
               name: 'span',
+              attributes: {},
               data: {
                 hName: 'span',
                 hProperties: {
-                  style: `color: ${this.highlighter!.getForegroundColor()};`,
+                  style: `color: ${this.#highlighter!.getForegroundColor()};`,
                 },
               },
               children: [
@@ -267,15 +293,20 @@ export class ShikiRenderer {
         )
       })
 
-      return this.wrapInsidePre(tokens, 'text', lines.length, codeblock.meta.title)
+      return this.#wrapInsidePre(tokens, 'text', lines.length, codeblock.meta.title)
     }
 
     /**
      * Tokenize code
      */
-    const shikiTokens = this.highlighter!.codeToThemedTokens(codeblock.value, language, undefined, {
-      includeExplanation: false,
-    })!
+    const shikiTokens = this.#highlighter!.codeToThemedTokens(
+      codeblock.value,
+      language,
+      undefined,
+      {
+        includeExplanation: false,
+      }
+    )!
 
     /**
      * Converting shiki tokens to mhast tokens
@@ -283,44 +314,45 @@ export class ShikiRenderer {
     const tokens = shikiTokens.map((group, index) => {
       const spans = group.map((token) => {
         return {
-          type: 'element',
+          type: 'leafDirective' as const,
           name: 'span',
+          attributes: {},
           data: {
             hName: 'span',
             hProperties: {
-              style: `color: ${token.color || this.highlighter!.getForegroundColor()};`,
+              style: `color: ${token.color || this.#highlighter!.getForegroundColor()};`,
             },
           },
           children: [
             {
-              type: 'text',
+              type: 'text' as const,
               value: token.content,
             },
           ],
         }
       })
 
-      return this.wrapInsideLine(spans, index, codeblock.meta, hasHighlights)
+      return this.#wrapInsideLine(spans, index, codeblock.meta, hasHighlights)
     })
 
-    return this.wrapInsidePre(tokens, language, shikiTokens.length, codeblock.meta.title)
+    return this.#wrapInsidePre(tokens, language, shikiTokens.length, codeblock.meta.title)
   }
+}
 
-  /**
-   * Dimer markdown transform function
-   */
-  public transform = function transform() {
-    return (tree: mdastTypes.Content) => {
-      return map(tree, (node: Code) => {
-        if (node.type !== 'code') {
-          return node
-        }
+/**
+ * Remark plugin to handle codeblocks using Shiki renderer.
+ */
+export function codeblocks(renderer: ShikiRenderer) {
+  return (tree: Node) => {
+    return map(tree, (node: Code) => {
+      if (node.type !== 'code') {
+        return node
+      }
 
-        /**
-         * Render plain text to code
-         */
-        return this.render(node)
-      })
-    }
-  }.bind(this)
+      /**
+       * Render plain text to code
+       */
+      return renderer.render(node)
+    })
+  }
 }

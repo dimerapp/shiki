@@ -7,4 +7,4 @@
  * file that was distributed with this source code.
  */
 
-export { ShikiRenderer } from './src/Renderer'
+export { ShikiRenderer, codeblocks } from './src/renderer/index.js'

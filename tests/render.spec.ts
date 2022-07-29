@@ -7,12 +7,14 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
+import { fileURLToPath } from 'node:url'
 import { MarkdownFile } from '@dimerapp/markdown'
-import { ShikiRenderer } from '../src/Renderer'
+
+import { ShikiRenderer, codeblocks } from '../src/renderer/index.js'
 
 test.group('Shiki | grammar', () => {
-  test('transform code blocks inside the pre tag', async (assert) => {
+  test('transform code blocks inside the pre tag', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -27,11 +29,11 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -47,7 +49,7 @@ test.group('Shiki | grammar', () => {
     assert.equal(code.children.length, pre.properties.dataLinesCount)
   })
 
-  test('highlight lines', async (assert) => {
+  test('highlight lines', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -66,11 +68,11 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -92,7 +94,7 @@ test.group('Shiki | grammar', () => {
     assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
   })
 
-  test('define codeblock title', async (assert) => {
+  test('define codeblock title', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -108,11 +110,11 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -135,7 +137,7 @@ test.group('Shiki | grammar', () => {
     assert.deepEqual(code.children[6].properties.className, ['line'])
   })
 
-  test('gracefully ignore invalid thematic block', async (assert) => {
+  test('gracefully ignore invalid thematic block', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -150,11 +152,11 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -176,7 +178,7 @@ test.group('Shiki | grammar', () => {
     assert.deepEqual(code.children[6].properties.className, ['line'])
   })
 
-  test('highlight inserts and deletes', async (assert) => {
+  test('highlight inserts and deletes', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -198,11 +200,11 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -224,7 +226,7 @@ test.group('Shiki | grammar', () => {
     assert.deepEqual(code.children[6].properties.className, ['line', 'highlight'])
   })
 
-  test('register a custom language', async (assert) => {
+  test('register a custom language', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '```ts',
@@ -236,16 +238,16 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     shiki.loadLanguage({
       scopeName: 'text.html.edge',
       id: 'edge',
-      path: '../edge.tmLanguage.json',
+      path: fileURLToPath(new URL('../edge.tmLanguage.json', import.meta.url)),
     })
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[4] as any
@@ -263,7 +265,7 @@ test.group('Shiki | grammar', () => {
 })
 
 test.group('Shiki | plain text', () => {
-  test('transform code blocks inside the pre tag', async (assert) => {
+  test('transform code blocks inside the pre tag', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -278,11 +280,11 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -298,7 +300,7 @@ test.group('Shiki | plain text', () => {
     assert.equal(code.children.length, pre.properties.dataLinesCount)
   })
 
-  test('highlight lines', async (assert) => {
+  test('highlight lines', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -317,11 +319,11 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -343,7 +345,7 @@ test.group('Shiki | plain text', () => {
     assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
   })
 
-  test('define codeblock title', async (assert) => {
+  test('define codeblock title', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -359,11 +361,11 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -386,7 +388,7 @@ test.group('Shiki | plain text', () => {
     assert.deepEqual(code.children[6].properties.className, ['line'])
   })
 
-  test('highlight inserts and deletes', async (assert) => {
+  test('highlight inserts and deletes', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -408,11 +410,11 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -436,7 +438,7 @@ test.group('Shiki | plain text', () => {
 })
 
 test.group('Shiki | unsupported language', () => {
-  test('transform code blocks inside the pre tag', async (assert) => {
+  test('transform code blocks inside the pre tag', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -451,11 +453,11 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -471,7 +473,7 @@ test.group('Shiki | unsupported language', () => {
     assert.equal(code.children.length, pre.properties.dataLinesCount)
   })
 
-  test('highlight lines using ranges', async (assert) => {
+  test('highlight lines using ranges', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -490,11 +492,11 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -516,7 +518,7 @@ test.group('Shiki | unsupported language', () => {
     assert.deepEqual(code.children[6].properties.className, ['line', 'dim'])
   })
 
-  test('define codeblock title', async (assert) => {
+  test('define codeblock title', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -532,11 +534,11 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -559,7 +561,7 @@ test.group('Shiki | unsupported language', () => {
     assert.deepEqual(code.children[6].properties.className, ['line'])
   })
 
-  test('highlight inserts and deletes', async (assert) => {
+  test('highlight inserts and deletes', async ({ assert }) => {
     const markdown = [
       `Pre sample`,
       '',
@@ -581,11 +583,11 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer(__dirname)
+    const shiki = new ShikiRenderer()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.transform(shiki.transform)
+    file.use(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
