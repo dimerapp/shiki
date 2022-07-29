@@ -57,7 +57,7 @@ await renderer.boot()
  * and pass the renderer as the only
  * argument.
  */
-md.use(codeblocks, renderer)
+md.transform(codeblocks, renderer)
 
 /**
  * Process markdown file
@@ -118,7 +118,7 @@ const md = new MarkdownFile(content)
  * Register codeblocks plugin that uses a specific
  * rendered
  */
-md.use(codeblocks, renderer)
+md.transform(codeblocks, renderer)
 
 /**
  * Process the markdown file

@@ -9,13 +9,15 @@
 
 import { map } from 'unist-util-map'
 import { fileURLToPath } from 'node:url'
+
 import type {
-  mdastTypes,
   Code,
-  ContainerDirective,
-  Directives,
   Node,
+  Directives,
+  mdastTypes,
+  ContainerDirective,
 } from '@dimerapp/markdown/types'
+
 import {
   Theme,
   loadTheme,

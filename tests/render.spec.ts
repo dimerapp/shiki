@@ -33,7 +33,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -72,7 +72,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -114,7 +114,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -156,7 +156,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -204,7 +204,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -247,7 +247,7 @@ test.group('Shiki | grammar', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[4] as any
@@ -284,7 +284,7 @@ test.group('Shiki | plain text', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -323,7 +323,7 @@ test.group('Shiki | plain text', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -365,7 +365,7 @@ test.group('Shiki | plain text', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -414,7 +414,7 @@ test.group('Shiki | plain text', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -457,7 +457,7 @@ test.group('Shiki | unsupported language', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -496,7 +496,7 @@ test.group('Shiki | unsupported language', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -538,7 +538,7 @@ test.group('Shiki | unsupported language', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
@@ -587,7 +587,7 @@ test.group('Shiki | unsupported language', () => {
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
-    file.use(codeblocks, shiki)
+    file.transform(codeblocks, shiki)
     await file.process()
 
     const pre = file.ast?.children[2] as any
