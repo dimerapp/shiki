@@ -1,7 +1,9 @@
-# @dimerapp/shiki
+# Dimer Shiki
 > Render markdown codeblocks using Shiki
 
-[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![synk-image]][synk-url]
+[![gh-workflow-image]][gh-workflow-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
+
+> **Note**: This package is ESM only
 
 The `@dimerapp/shiki` package let you render codeblocks using the [shiki](http://shiki.matsu.io/) code highlighter, which internally uses VSCode themes and languages for transforming the code blocks.
 
@@ -124,9 +126,6 @@ md.use(codeblocks, renderer)
 await md.process()
 ```
 
-[circleci-image]: https://img.shields.io/circleci/project/github/dimerapp/shiki/master.svg?style=for-the-badge&logo=circleci
-[circleci-url]: https://circleci.com/gh/dimerapp/shiki "circleci"
-
 [typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
 [typescript-url]:  "typescript"
 
@@ -136,5 +135,5 @@ await md.process()
 [license-image]: https://img.shields.io/npm/l/@dimerapp/shiki?color=blueviolet&style=for-the-badge
 [license-url]: LICENSE.md "license"
 
-[synk-image]: https://img.shields.io/snyk/vulnerabilities/github/dimerapp/shiki?label=Synk%20Vulnerabilities&style=for-the-badge
-[synk-url]: https://snyk.io/test/github/dimerapp/shiki?targetFile=package.json "synk"
+[gh-workflow-image]: https://img.shields.io/github/workflow/status/dimerapp/shiki/test?style=for-the-badge
+[gh-workflow-url]: https://github.com/dimerapp/shiki/actions/workflows/test.yml "Github actions"
