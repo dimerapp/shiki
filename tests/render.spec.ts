@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { fileURLToPath } from 'node:url'
 import { MarkdownFile } from '@dimerapp/markdown'
 
-import { ShikiRenderer, codeblocks } from '../src/renderer/index.js'
+import { Shiki, codeblocks } from '../index.js'
 
 test.group('Shiki | grammar', () => {
   test('transform code blocks inside the pre tag', async ({ assert }) => {
@@ -29,7 +29,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -68,7 +68,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -110,7 +110,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -152,7 +152,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -200,7 +200,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -238,7 +238,7 @@ test.group('Shiki | grammar', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     shiki.loadLanguage({
       scopeName: 'text.html.edge',
       id: 'edge',
@@ -280,7 +280,7 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -319,7 +319,7 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -361,7 +361,7 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -410,7 +410,7 @@ test.group('Shiki | plain text', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -453,7 +453,7 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -492,7 +492,7 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -534,7 +534,7 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })
@@ -583,7 +583,7 @@ test.group('Shiki | unsupported language', () => {
       '```',
     ].join('\n')
 
-    const shiki = new ShikiRenderer()
+    const shiki = new Shiki()
     await shiki.boot()
 
     const file = new MarkdownFile(markdown, { enableDirectives: true })

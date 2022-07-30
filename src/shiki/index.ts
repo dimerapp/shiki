@@ -7,17 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { map } from 'unist-util-map'
 import { fileURLToPath } from 'node:url'
 
-import type {
-  Code,
-  Node,
-  Directives,
-  mdastTypes,
-  ContainerDirective,
-} from '@dimerapp/markdown/types'
-
+import type { Code, Directives, mdastTypes, ContainerDirective } from '@dimerapp/markdown/types'
 import {
   Theme,
   loadTheme,
@@ -30,9 +22,10 @@ import {
 } from 'shiki'
 
 /**
- * Shiki renderer to render codeblocks using vscode themes and languages.
+ * Exposes the API to render codeblocks using vscode
+ * themes and languages.
  */
-export class ShikiRenderer {
+export class Shiki {
   /**
    * Reference to the theme to use. The value can be one of the
    * following.
@@ -338,23 +331,5 @@ export class ShikiRenderer {
     })
 
     return this.#wrapInsidePre(tokens, language, shikiTokens.length, codeblock.meta.title)
-  }
-}
-
-/**
- * Remark plugin to handle codeblocks using Shiki renderer.
- */
-export function codeblocks(renderer: ShikiRenderer) {
-  return (tree: Node) => {
-    return map(tree, (node: Code) => {
-      if (node.type !== 'code') {
-        return node
-      }
-
-      /**
-       * Render plain text to code
-       */
-      return renderer.render(node)
-    })
   }
 }
