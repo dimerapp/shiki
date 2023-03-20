@@ -1,7 +1,7 @@
 # Dimer Shiki
 > Render markdown codeblocks using Shiki
 
-[![gh-workflow-image]][gh-workflow-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
+[![gh-workflow-image]][gh-workflow-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![snyk-image]][snyk-url]
 
 > **Note**: This package is ESM only
 
@@ -126,14 +126,17 @@ md.transform(codeblocks, renderer)
 await md.process()
 ```
 
+[gh-workflow-image]: https://img.shields.io/github/actions/workflow/status/dimerapp/shiki/test.yml?style=for-the-badge
+[gh-workflow-url]: https://github.com/dimerapp/shiki/actions/workflows/test.yml 'Github action'
+
 [typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
-[typescript-url]:  "typescript"
+[typescript-url]: "typescript"
 
 [npm-image]: https://img.shields.io/npm/v/@dimerapp/shiki.svg?style=for-the-badge&logo=npm
-[npm-url]: https://npmjs.org/package/@dimerapp/shiki "npm"
+[npm-url]: https://npmjs.org/package/@dimerapp/shiki 'npm'
 
 [license-image]: https://img.shields.io/npm/l/@dimerapp/shiki?color=blueviolet&style=for-the-badge
-[license-url]: LICENSE.md "license"
+[license-url]: LICENSE.md 'license'
 
-[gh-workflow-image]: https://img.shields.io/github/workflow/status/dimerapp/shiki/test?style=for-the-badge
-[gh-workflow-url]: https://github.com/dimerapp/shiki/actions/workflows/test.yml "Github actions"
+[snyk-image]: https://img.shields.io/snyk/vulnerabilities/github/dimerapp/shiki?label=Synk%20Vulnerabilities&style=for-the-badge
+[snyk-url]: https://snyk.io/test/github/dimerapp/shiki?targetFile=package.json 'snyk'
