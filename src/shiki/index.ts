@@ -31,10 +31,10 @@ export class Shiki {
    * following.
    *
    * - Absolute path to a theme file.
-   * - Shorthand name for a recognized theme like "material-palenight"
+   * - Shorthand name for a recognized theme like "material-theme-palenight"
    * - Or the JSON blob for the theme
    */
-  #theme: IShikiTheme | Theme | string = 'material-palenight'
+  #theme: IShikiTheme | Theme | string = 'material-theme-palenight'
 
   /**
    * A collection of custom languages to load.

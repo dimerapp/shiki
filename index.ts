@@ -18,7 +18,7 @@ export { Shiki }
  */
 export function codeblocks(renderer: Shiki) {
   return (tree: Node) => {
-    return map(tree, (node: Code) => {
+    return map(tree, (node) => {
       if (node.type !== 'code') {
         return node
       }
@@ -26,7 +26,7 @@ export function codeblocks(renderer: Shiki) {
       /**
        * Render plain text to code
        */
-      return renderer.render(node)
+      return renderer.render(node as Code)
     })
   }
 }
