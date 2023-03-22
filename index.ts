@@ -9,9 +9,10 @@
 
 import { map } from 'unist-util-map'
 import type { Code, Node } from '@dimerapp/markdown/types'
-
 import { Shiki } from './src/shiki/index.js'
+
 export { Shiki }
+export type { Theme, IShikiTheme, Highlighter, ILanguageRegistration } from 'shiki'
 
 /**
  * Remark plugin to transform codeblocks using shiki
