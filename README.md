@@ -34,30 +34,28 @@ yarn add @dimerapp/markdown
 ```
 
 ## Usage
-Import the `ShikiRenderer` and the `codeblocks` remark plugin to process the codeblocks inside your markdown files.
+Import the `Shiki` class and the `codeblocks` remark plugin to process the codeblocks inside your markdown files.
 
 ```ts
 import { MarkdownFile } from '@dimerapp/markdown'
-import { ShikiRenderer, codeblocks } from '@dimerapp/shiki'
+import { Shiki, codeblocks } from '@dimerapp/shiki'
 
 const md = new MarkdownFile(content)
-const renderer = new ShikiRenderer()
+const shiki = new Shiki()
 
-renderer.useTheme('nord')
-
-/**
- * Booting the renderer will load the required grammar
- * files and themes. The operation is async and
- * must be done only once.
- */
-await renderer.boot()
+shiki.useTheme('nord')
 
 /**
- * Register the "codeblock" remark plugin
- * and pass the renderer as the only
- * argument.
+ * Booting shiki will load the required grammar files and themes.
+ * The operation is async and must be done only once.
  */
-md.transform(codeblocks, renderer)
+await shiki.boot()
+
+/**
+ * Register the "codeblock" remark plugin and pass the
+ * shiki instance to it.
+ */
+md.transform(codeblocks, shiki)
 
 /**
  * Process markdown file
@@ -65,19 +63,19 @@ md.transform(codeblocks, renderer)
 await md.process()
 ```
 
-## Shiki renderer
-The `ShikiRenderer` class allows you to configure shiki by using a custom theme and load custom languages.
+## Shiki
+The `Shiki` class allows you to configure shiki by using a custom theme and load custom languages.
 
-Also, a single renderer instance can be used to process multiple markdown files.
+Also, a single shiki instance can be used to process multiple markdown files.
 
 ```ts
-import { ShikiRenderer } from '@dimerapp/shiki'
-const renderer = new ShikiRenderer()
+import { Shiki } from '@dimerapp/shiki'
+const shiki = new Shiki()
 
 // 1. use theme before calling boot
 // 2. load custom languages before calling boot
 
-await renderer.boot()
+await shiki.boot()
 ```
 
 ### Using different themes
@@ -85,19 +83,19 @@ You can use different themes by calling the `useTheme` method. It accepts one of
 
 | Type | Description |
 |------|-------------|
-| Shorthand name | You can define the shorthand name from one of the bundled VSCode themes. For example: `renderer.useTheme('github-dark')`. Here is the [list](https://github.com/shikijs/shiki/blob/main/docs/themes.md#all-themes) of all the shorthand names. |
+| Shorthand name | You can define the shorthand name from one of the bundled VSCode themes. For example: `shiki.useTheme('github-dark')`. Here is the [list](https://github.com/shikijs/shiki/blob/main/docs/themes.md#all-themes) of all the shorthand names. |
 | Path to JSON file | You can use custom themes by passing an absolute path to the theme JSON file.
 
 ```ts
-renderer.useTheme('nord')
-renderer.useTheme(new URL('./custom-theme.json', import.meta.url))
+shiki.useTheme('nord')
+shiki.useTheme(new URL('./custom-theme.json', import.meta.url))
 ```
 
 ### Using different languages
 Most of the [common languages](https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages) are already supported by Shiki. However, you can also register custom languages by calling the `loadLanguage` method.
 
 ```ts
-renderer.loadLanguage({
+shiki.loadLanguage({
   scopeName: 'text.html.edge',
   id: 'edge',
   path: fileURLToPath(new URL('../edge.tmLanguage.json', import.meta.url)),  
@@ -118,7 +116,7 @@ const md = new MarkdownFile(content)
  * Register codeblocks plugin that uses a specific
  * rendered
  */
-md.transform(codeblocks, renderer)
+md.transform(codeblocks, shiki)
 
 /**
  * Process the markdown file
