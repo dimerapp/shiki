@@ -9,7 +9,7 @@
 
 import { map } from 'unist-util-map'
 import type { Code, Node } from '@dimerapp/markdown/types'
-import { Shiki } from './src/shiki/index.js'
+import { Shiki } from './src/shiki.js'
 
 export { Shiki }
 export type { Theme, IShikiTheme, Highlighter, ILanguageRegistration } from 'shiki'
