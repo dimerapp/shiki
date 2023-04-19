@@ -9,6 +9,7 @@
     "index.ts",
     "build/src",
     "build/index.d.ts",
+    "build/index.d.ts.map",
     "build/index.js"
   ],
   "exports": {
