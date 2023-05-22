@@ -1,6 +1,6 @@
 {
   "name": "@dimerapp/shiki",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Shiki processor",
   "main": "build/index.js",
   "type": "module",
