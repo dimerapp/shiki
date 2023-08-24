@@ -19,7 +19,7 @@ export type { Theme, IShikiTheme, Highlighter, ILanguageRegistration } from 'shi
  */
 export function codeblocks(renderer: Shiki) {
   return (tree: Node) => {
-    return map(tree, (node) => {
+    return map(tree as any, (node) => {
       if (node.type !== 'code') {
         return node
       }
