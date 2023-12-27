@@ -1,7 +1,7 @@
 # Dimer Shiki
 > Render markdown codeblocks using Shiki
 
-[![gh-workflow-image]][gh-workflow-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![snyk-image]][snyk-url]
+[![gh-workflow-image]][gh-workflow-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
 
 > **Note**: This package is ESM only
 
@@ -135,6 +135,3 @@ await md.process()
 
 [license-image]: https://img.shields.io/npm/l/@dimerapp/shiki?color=blueviolet&style=for-the-badge
 [license-url]: LICENSE.md 'license'
-
-[snyk-image]: https://img.shields.io/snyk/vulnerabilities/github/dimerapp/shiki?label=Synk%20Vulnerabilities&style=for-the-badge
-[snyk-url]: https://snyk.io/test/github/dimerapp/shiki?targetFile=package.json 'snyk'
