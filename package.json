@@ -61,7 +61,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "shiki": "^0.14.7",
+    "shiki": "^1.0.0",
     "unist-util-map": "^4.0.0"
   },
   "peerDependencies": {
